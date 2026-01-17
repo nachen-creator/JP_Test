@@ -6,6 +6,7 @@ using LLMUnity;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+using System;
 
 namespace LLMUnitySamples
 {
@@ -95,8 +96,23 @@ namespace LLMUnitySamples
 
             AddBubble(message, true);
             Bubble aiBubble = AddBubble("...", false);
-            Task chatTask = llmAgent.Chat(message, aiBubble.SetText, AllowInput);
+            Task chatTask = llmAgent.Chat(message, 
+                (response) =>
+                {
+                currentResponse = response;
+                aiBubble.SetText(response);
+                }, 
+                HandleLLMResponseCompleted);
             inputBubble.SetText("");
+        }
+
+        private string currentResponse = "";
+        public static event Action<string> ResponseCompletedCallback;
+
+        private void HandleLLMResponseCompleted()
+        {
+            AllowInput();
+            ResponseCompletedCallback?.Invoke(currentResponse);
         }
 
         public void WarmUpCallback()
